@@ -1,0 +1,8 @@
+C:\Users\myalsailamy\Desktop\files (2)\obj\Debug\PosDemoApp.csproj.CoreCompileInputs.cache
+C:\Users\myalsailamy\Desktop\files (2)\bin\Debug\PosDemoApp.exe
+C:\Users\myalsailamy\Desktop\files (2)\bin\Debug\PosDemoApp.pdb
+C:\Users\myalsailamy\Desktop\files (2)\obj\Debug\PosDemoApp.exe
+C:\Users\myalsailamy\Desktop\files (2)\obj\Debug\PosDemoApp.pdb
+C:\Users\myalsailamy\Desktop\files (2)\obj\Debug\PosDemoApp.csproj.AssemblyReference.cache
+C:\Users\myalsailamy\Desktop\files (2)\obj\Debug\ThermalReceiptPrinter.Demo.SamplePosForm.resources
+C:\Users\myalsailamy\Desktop\files (2)\obj\Debug\PosDemoApp.csproj.GenerateResource.cache
