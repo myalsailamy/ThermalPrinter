@@ -1,6 +1,9 @@
 using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Printing;
+using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using ThermalReceiptPrinter;
 
@@ -143,7 +146,21 @@ namespace ThermalReceiptPrinter.Demo
                 NetworkIp = txtIp.Text.Trim(),
                 NetworkPort = int.TryParse(txtPort.Text.Trim(), out int port) ? port : 9100,
                 WidthType = rdo58mm.Checked ? PaperWidthType.Mm58 : PaperWidthType.Mm80,
-                AutoCut = chkAutoCut.Checked
+                AutoCut = chkAutoCut.Checked,
+
+                // -------------------------------------------
+
+                TitleFamily = string.IsNullOrWhiteSpace(cmboBxTitle.Text) ? "Tahoma" : cmboBxTitle.Text.Trim(),
+                TitleFontSize = (float)numBxTite.Value >= 8 ? (float)numBxTite.Value : 9f,
+                FontArFamily = string.IsNullOrWhiteSpace(cmboBxArName.Text) ? "Tahoma" : cmboBxArName.Text.Trim(),
+                NormalArFontSize = (float)numBxArName.Value >= 8 ? (float)numBxArName.Value : 9f,
+                FontEnFamily = string.IsNullOrWhiteSpace(cmboBxEnName.Text) ? "Tahoma" : cmboBxEnName.Text.Trim(),
+                NormalEnFontSize = (float)numBxEnName.Value >= 8 ? (float)numBxEnName.Value : 9f,
+                NumberFontFamily = string.IsNullOrWhiteSpace(cmboBxNumber.Text) ? "Tahoma" : cmboBxNumber.Text.Trim(),
+                NumberFontSize = (float)numBxNumber.Value >= 8 ? (float)numBxNumber.Value : 9f,
+                FontFamily = string.IsNullOrWhiteSpace(cmboBxGeneral.Text) ? "Tahoma" : cmboBxGeneral.Text.Trim(),
+                NormalFontSize = (float)numBxGeneral.Value >= 8 ? (float)numBxGeneral.Value : 9f,
+
             };
             return profile;
         }
@@ -176,6 +193,7 @@ namespace ThermalReceiptPrinter.Demo
             receipt.Items.Add(new ReceiptItem { NameAr = "أرز بسمتي 5 كجم", NameEn = "Basmati Rice 5KG", Quantity = 2, UnitPrice = 45.00m });
             receipt.Items.Add(new ReceiptItem { NameAr = "زيت دوار الشمس 1.8 لتر", NameEn = "Sunflower Oil 1.8L", Quantity = 1, UnitPrice = 28.50m });
             receipt.Items.Add(new ReceiptItem { NameAr = "شاي أحمر فاخر", NameEn = "Premium Black Tea", Quantity = 3, UnitPrice = 12.00m });
+            receipt.Items.Add(new ReceiptItem { NameAr = "تجربة طباعة نص طويل من أجل فحص قدرة الفاتورة على النزول سطر في حال كان السطر طويل", NameEn = "Premium Black Tea", Quantity = 3, UnitPrice = 12.00m });
 
             receipt.VatAmount = Math.Round(receipt.SubtotalBeforeVat * 0.15m, 2);
             return receipt;
@@ -185,6 +203,71 @@ namespace ThermalReceiptPrinter.Demo
         {
             lblStatus.Text = message;
             lblStatus.ForeColor = color;
+        }
+
+        private void btnSaveImage_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
+                sfd.FileName = "Image";
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    SavePictureBoxImage(pbPreview, sfd.FileName, 100);
+
+                    MessageBox.Show("تم حفظ الصورة بنجاح.");
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// حفظ صورة PictureBox إلى ملف.
+        /// يدعم PNG و JPG مع تحديد جودة JPG.
+        /// </summary>
+        /// <param name="pictureBox">عنصر PictureBox</param>
+        /// <param name="filePath">المسار الكامل للحفظ</param>
+        /// <param name="jpegQuality">جودة JPEG من 0 إلى 100</param>
+        public void SavePictureBoxImage(PictureBox pictureBox, string filePath, long jpegQuality = 100L)
+        {
+            if (pictureBox == null)
+                throw new ArgumentNullException(nameof(pictureBox));
+
+            if (pictureBox.Image == null)
+                throw new InvalidOperationException("لا توجد صورة داخل PictureBox.");
+
+            string ext = Path.GetExtension(filePath).ToLowerInvariant();
+
+            switch (ext)
+            {
+                case ".png":
+                    pictureBox.Image.Save(filePath, ImageFormat.Png);
+                    break;
+
+                case ".bmp":
+                    pictureBox.Image.Save(filePath, ImageFormat.Bmp);
+                    break;
+
+                case ".gif":
+                    pictureBox.Image.Save(filePath, ImageFormat.Gif);
+                    break;
+
+                case ".jpg":
+                case ".jpeg":
+                    ImageCodecInfo jpgEncoder = ImageCodecInfo.GetImageEncoders()
+                        .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
+
+                    using (EncoderParameters encoderParams = new EncoderParameters(1))
+                    {
+                        encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, jpegQuality);
+                        pictureBox.Image.Save(filePath, jpgEncoder, encoderParams);
+                    }
+                    break;
+
+                default:
+                    throw new NotSupportedException("صيغة الملف غير مدعومة.");
+            }
         }
     }
 }

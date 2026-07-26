@@ -1,6 +1,8 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace ThermalReceiptPrinter
@@ -18,12 +20,13 @@ namespace ThermalReceiptPrinter
             int widthPx = profile.GetWidthPixels();
             int margin = profile.MarginPx;
 
-            using (Font titleFont = new Font(profile.FontFamily, profile.TitleFontSize, FontStyle.Bold))
-            using (Font subTitleFont = new Font(profile.FontFamily, profile.SubTitleFontSize, FontStyle.Bold))
-            using (Font boldFont = new Font(profile.FontFamily, profile.NormalFontSize, FontStyle.Bold))
-            using (Font normalFont = new Font(profile.FontFamily, profile.NormalFontSize, FontStyle.Regular))
-            using (Font smallFont = new Font(profile.FontFamily, profile.SmallFontSize, FontStyle.Regular))
-            using (Font grandTotalFont = new Font(profile.FontFamily, profile.TitleFontSize - 1, FontStyle.Bold))
+            using (Font titleFont = new Font(profile.TitleFamily, profile.TitleFontSize, FontStyle.Bold))
+            using (Font subTitleFont = new Font(profile.FontArFamily, profile.SubTitleFontSize, FontStyle.Bold))
+            using (Font boldFont = new Font(profile.FontArFamily, profile.NormalFontSize, FontStyle.Bold))
+            using (Font normalArFont = new Font(profile.FontArFamily, profile.NormalArFontSize, FontStyle.Bold))
+            using (Font normalEnFont = new Font(profile.FontEnFamily, profile.NormalEnFontSize, FontStyle.Regular))
+            using (Font numberFont = new Font(profile.NumberFontFamily, profile.NumberFontSize, FontStyle.Bold))
+            using (Font grandTotalFont = new Font(profile.TitleFamily, profile.TitleFontSize, FontStyle.Bold))
             using (Bitmap working = new Bitmap(widthPx, WorkingHeightPx, PixelFormat.Format32bppArgb))
             {
                 working.SetResolution(profile.Dpi, profile.Dpi);
@@ -31,8 +34,16 @@ namespace ThermalReceiptPrinter
 
                 using (Graphics g = Graphics.FromImage(working))
                 {
+
                     g.Clear(Color.White);
-                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.SmoothingMode = SmoothingMode.None;              // لا تنعيم للخطوط/الحدود
+                    g.TextRenderingHint = TextRenderingHint.AntiAlias; // نص حاد بلا Anti-Alias | SingleBitPerPixelGridFit
+                    g.InterpolationMode = InterpolationMode.NearestNeighbor; // مهم فقط عند رسم صور/شعار/باركود
+                    g.PixelOffsetMode = PixelOffsetMode.None;
+                    g.CompositingQuality = CompositingQuality.HighQuality;
+
+                    //g.Clear(Color.White);
+                    //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
                     // ===== شعار =====
                     if (receipt.Logo != null)
@@ -49,23 +60,23 @@ namespace ThermalReceiptPrinter
                     y = DrawCenter(g, receipt.CompanyNameAr, titleFont, widthPx, y);
                     y = DrawCenter(g, receipt.CompanyNameEn, subTitleFont, widthPx, y);
                     if (!string.IsNullOrEmpty(receipt.TaxNumber))
-                        y = DrawCenter(g, "الرقم الضريبي: " + receipt.TaxNumber, smallFont, widthPx, y);
+                        y = DrawCenter(g, "الرقم الضريبي: " + receipt.TaxNumber, numberFont, widthPx, y);
                     if (!string.IsNullOrEmpty(receipt.CommercialRegister))
-                        y = DrawCenter(g, "السجل التجاري: " + receipt.CommercialRegister, smallFont, widthPx, y);
+                        y = DrawCenter(g, "السجل التجاري: " + receipt.CommercialRegister, numberFont, widthPx, y);
 
                     y += 3;
                     y = DrawCenter(g, $"***** {receipt.InvoiceTitleAr} *****", boldFont, widthPx, y);
-                    y = DrawCenter(g, receipt.InvoiceTitleEn, normalFont, widthPx, y);
+                    y = DrawCenter(g, receipt.InvoiceTitleEn, normalArFont, widthPx, y);
 
                     y = DrawSolidLine(g, y, widthPx, margin);
 
                     // ===== بيانات الفاتورة =====
-                    y = DrawRow(g, "رقم الفاتورة", receipt.InvoiceNumber, normalFont, margin, widthPx, y);
-                    y = DrawRow(g, "التاريخ", receipt.DateTime.ToString("dd/MM/yyyy hh:mm tt"), normalFont, margin, widthPx, y);
+                    y = DrawRow(g, "رقم الفاتورة", receipt.InvoiceNumber, normalArFont, margin, widthPx, y);
+                    y = DrawRow(g, "التاريخ", receipt.DateTime.ToString("dd/MM/yyyy hh:mm tt"), normalArFont, margin, widthPx, y);
                     if (!string.IsNullOrEmpty(receipt.CashierName))
-                        y = DrawRow(g, "الكاشير", receipt.CashierName, normalFont, margin, widthPx, y);
+                        y = DrawRow(g, "الكاشير", receipt.CashierName, normalArFont, margin, widthPx, y);
                     if (!string.IsNullOrEmpty(receipt.CustomerName))
-                        y = DrawRow(g, "العميل", receipt.CustomerName, normalFont, margin, widthPx, y);
+                        y = DrawRow(g, "العميل", receipt.CustomerName, normalArFont, margin, widthPx, y);
 
                     y = DrawSolidLine(g, y, widthPx, margin);
 
@@ -75,18 +86,18 @@ namespace ThermalReceiptPrinter
                     y = DrawDashedLine(g, y, widthPx, margin);
 
                     foreach (var item in receipt.Items)
-                        y = cols.DrawRow(g, item, normalFont, smallFont, y);
+                        y = cols.DrawRow(g, item, normalArFont, normalEnFont, numberFont, y);
 
                     y = DrawDashedLine(g, y, widthPx, margin);
                     y += 2;
 
                     // ===== ملخص الأصناف =====
-                    y = DrawRow(g, "عدد الأصناف", receipt.ItemCount.ToString(), normalFont, margin, widthPx, y);
-                    y = DrawRow(g, "إجمالي الكمية", receipt.TotalQuantity.ToString("0.##"), normalFont, margin, widthPx, y);
+                    y = DrawRow(g, "عدد الأصناف", receipt.ItemCount.ToString(), normalArFont, margin, widthPx, y);
+                    y = DrawRow(g, "إجمالي الكمية", receipt.TotalQuantity.ToString("0.##"), normalArFont, margin, widthPx, y);
 
                     y += 2;
-                    y = DrawRow(g, "الإجمالي قبل الضريبة", receipt.SubtotalBeforeVat.ToString("N2"), normalFont, margin, widthPx, y);
-                    y = DrawRow(g, "ضريبة القيمة المضافة", receipt.VatAmount.ToString("N2"), normalFont, margin, widthPx, y);
+                    y = DrawRow(g, "الإجمالي قبل الضريبة", receipt.SubtotalBeforeVat.ToString("N2"), normalArFont, margin, widthPx, y);
+                    y = DrawRow(g, "ضريبة القيمة المضافة", receipt.VatAmount.ToString("N2"), normalArFont, margin, widthPx, y);
 
                     y = DrawDashedLine(g, y, widthPx, margin);
 
@@ -98,15 +109,15 @@ namespace ThermalReceiptPrinter
                     // ===== تذييل =====
                     y += 2;
                     y = DrawCenter(g, receipt.FooterThanksAr, boldFont, widthPx, y);
-                    y = DrawCenter(g, receipt.FooterThanksEn, normalFont, widthPx, y);
+                    y = DrawCenter(g, receipt.FooterThanksEn, normalArFont, widthPx, y);
 
                     if (!string.IsNullOrEmpty(receipt.ReturnPolicyAr))
                     {
                         y += 4;
-                        y = DrawCenter(g, "سياسة الاسترجاع:", smallFont, widthPx, y);
-                        y = DrawCenter(g, receipt.ReturnPolicyAr, smallFont, widthPx, y);
+                        y = DrawCenter(g, "سياسة الاسترجاع:", numberFont, widthPx, y);
+                        y = DrawCenter(g, receipt.ReturnPolicyAr, numberFont, widthPx, y);
                         if (!string.IsNullOrEmpty(receipt.ReturnPolicyEn))
-                            y = DrawCenter(g, receipt.ReturnPolicyEn, smallFont, widthPx, y);
+                            y = DrawCenter(g, receipt.ReturnPolicyEn, numberFont, widthPx, y);
                     }
 
                     bool hasContact = !string.IsNullOrEmpty(receipt.Address) || !string.IsNullOrEmpty(receipt.Phone)
@@ -115,23 +126,23 @@ namespace ThermalReceiptPrinter
                     if (hasContact)
                     {
                         y += 2;
-                        if (!string.IsNullOrEmpty(receipt.Address)) y = DrawCenter(g, "العنوان: " + receipt.Address, smallFont, widthPx, y);
-                        if (!string.IsNullOrEmpty(receipt.Phone)) y = DrawCenter(g, "الهاتف: " + receipt.Phone, smallFont, widthPx, y);
-                        if (!string.IsNullOrEmpty(receipt.WhatsApp)) y = DrawCenter(g, "واتساب: " + receipt.WhatsApp, smallFont, widthPx, y);
-                        if (!string.IsNullOrEmpty(receipt.Email)) y = DrawCenter(g, "البريد الإلكتروني: " + receipt.Email, smallFont, widthPx, y);
-                        if (!string.IsNullOrEmpty(receipt.Website)) y = DrawCenter(g, "الموقع الإلكتروني: " + receipt.Website, smallFont, widthPx, y);
+                        if (!string.IsNullOrEmpty(receipt.Address)) y = DrawCenter(g, "العنوان: " + receipt.Address, numberFont, widthPx, y);
+                        if (!string.IsNullOrEmpty(receipt.Phone)) y = DrawCenter(g, "الهاتف: " + receipt.Phone, numberFont, widthPx, y);
+                        if (!string.IsNullOrEmpty(receipt.WhatsApp)) y = DrawCenter(g, "واتساب: " + receipt.WhatsApp, numberFont, widthPx, y);
+                        if (!string.IsNullOrEmpty(receipt.Email)) y = DrawCenter(g, "البريد الإلكتروني: " + receipt.Email, numberFont, widthPx, y);
+                        if (!string.IsNullOrEmpty(receipt.Website)) y = DrawCenter(g, "الموقع الإلكتروني: " + receipt.Website, numberFont, widthPx, y);
                     }
 
                     if (!string.IsNullOrEmpty(receipt.SocialMediaLine))
                     {
                         y = DrawSolidLine(g, y, widthPx, margin);
-                        y = DrawCenter(g, "تابعنا: " + receipt.SocialMediaLine, smallFont, widthPx, y);
+                        y = DrawCenter(g, "تابعنا: " + receipt.SocialMediaLine, numberFont, widthPx, y);
                     }
 
                     y = DrawSolidLine(g, y, widthPx, margin);
                     y += 2;
-                    y = DrawCenter(g, receipt.FarewellAr, normalFont, widthPx, y);
-                    y = DrawCenter(g, receipt.FarewellEn, smallFont, widthPx, y);
+                    y = DrawCenter(g, receipt.FarewellAr, normalArFont, widthPx, y);
+                    y = DrawCenter(g, receipt.FarewellEn, normalEnFont, widthPx, y);
 
                     y = DrawSolidLine(g, y, widthPx, margin);
                     y += margin;
@@ -224,33 +235,33 @@ namespace ThermalReceiptPrinter
                 return y + h + 3;
             }
 
-            public int DrawRow(Graphics g, ReceiptItem item, Font font, Font smallFont, int y)
+            public int DrawRow(Graphics g, ReceiptItem item, Font fontAr, Font fontEn, Font numberFont, int y)
             {
                 TextFormatFlags nameFlags = TextFormatFlags.Right | TextFormatFlags.RightToLeft | TextFormatFlags.WordBreak;
                 TextFormatFlags nameEnFlags = TextFormatFlags.Left | TextFormatFlags.WordBreak;
 
-                Size nameArSize = TextRenderer.MeasureText(g, item.NameAr ?? "", font, new Size(_nameArea.Width, int.MaxValue), nameFlags);
+                Size nameArSize = TextRenderer.MeasureText(g, item.NameAr ?? "", fontAr, new Size(_nameArea.Width, int.MaxValue), nameFlags);
                 Size nameEnSize = string.IsNullOrEmpty(item.NameEn)
                     ? Size.Empty
-                    : TextRenderer.MeasureText(g, item.NameEn, smallFont, new Size(_nameArea.Width, int.MaxValue), nameEnFlags);
+                    : TextRenderer.MeasureText(g, item.NameEn, fontEn, new Size(_nameArea.Width, int.MaxValue), nameEnFlags);
 
                 int nameBlockHeight = nameArSize.Height + (nameEnSize.Height > 0 ? nameEnSize.Height + 1 : 0);
-                int minRowHeight = TextRenderer.MeasureText(g, "0", font).Height;
+                int minRowHeight = TextRenderer.MeasureText(g, "0", fontAr).Height;
                 int rowHeight = Math.Max(nameBlockHeight, minRowHeight);
 
                 // اسم الصنف بالعربي ثم الإنجليزي أسفله
                 Rectangle nameArRect = new Rectangle(_nameArea.X, y, _nameArea.Width, nameArSize.Height);
-                TextRenderer.DrawText(g, item.NameAr ?? "", font, nameArRect, Color.Black, nameFlags | TextFormatFlags.WordBreak);
+                TextRenderer.DrawText(g, item.NameAr ?? "", fontAr, nameArRect, Color.Black, nameFlags | TextFormatFlags.WordBreak);
 
                 if (nameEnSize.Height > 0)
                 {
                     Rectangle nameEnRect = new Rectangle(_nameArea.X, y + nameArSize.Height + 1, _nameArea.Width, nameEnSize.Height);
-                    TextRenderer.DrawText(g, item.NameEn, smallFont, nameEnRect, Color.DimGray, nameEnFlags | TextFormatFlags.WordBreak);
+                    TextRenderer.DrawText(g, item.NameEn, fontEn, nameEnRect, Color.DimGray, nameEnFlags | TextFormatFlags.WordBreak);
                 }
 
-                DrawCell(g, item.Quantity.ToString("0.##"), font, _qtyArea, y, rowHeight, TextFormatFlags.HorizontalCenter);
-                DrawCell(g, item.UnitPrice.ToString("N2"), font, _priceArea, y, rowHeight, TextFormatFlags.HorizontalCenter);
-                DrawCell(g, item.LineTotal.ToString("N2"), font, _totalArea, y, rowHeight, TextFormatFlags.HorizontalCenter);
+                DrawCell(g, item.Quantity.ToString("0.##"), numberFont, _qtyArea, y, rowHeight, TextFormatFlags.HorizontalCenter);
+                DrawCell(g, item.UnitPrice.ToString("N2"), numberFont, _priceArea, y, rowHeight, TextFormatFlags.HorizontalCenter);
+                DrawCell(g, item.LineTotal.ToString("N2"), numberFont, _totalArea, y, rowHeight, TextFormatFlags.HorizontalCenter);
 
                 return y + rowHeight + 4;
             }

@@ -43,7 +43,7 @@ namespace ThermalReceiptPrinter
 
         // ---------- إعدادات الورق والطباعة ----------
 
-        public PaperWidthType WidthType { get; set; } = PaperWidthType.Mm80;
+        public PaperWidthType WidthType { get; set; } = PaperWidthType.Mm58;
 
         /// <summary>يُستخدم فقط عند اختيار PaperWidthType.Custom.</summary>
         public int CustomWidthMm { get; set; } = 80;
@@ -60,15 +60,21 @@ namespace ThermalReceiptPrinter
         public bool OpenCashDrawerAfterPrint { get; set; } = false;
 
         /// <summary>عتبة تحويل اللون إلى أسود عند تحويل الصورة (0-255).</summary>
-        public int BlackThreshold { get; set; } = 160;
+        public int BlackThreshold { get; set; } = 160; // 160 الافتراضي 
 
         // ---------- إعدادات الخطوط ----------
 
-        public string FontFamily { get; set; } = "Tahoma";
+        public string TitleFamily { get; set; } = "Time New Roman";  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
+        public string FontArFamily { get; set; } = "Time New Roman";  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
+        public string FontEnFamily { get; set; } = "Tahoma";  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
+        public string NumberFontFamily { get; set; } = "Tahoma";  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
+        public string FontFamily { get; set; } = "Consolas";  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
         public float TitleFontSize { get; set; } = 13f;
-        public float SubTitleFontSize { get; set; } = 10.5f;
+        public float SubTitleFontSize { get; set; } = 11f;
+        public float NormalArFontSize { get; set; } = 11;  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
+        public float NormalEnFontSize { get; set; } = 9.5f;  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
+        public float NumberFontSize { get; set; } = 10;  // Time New Roman |  Consolas, Segoe UI, Tahoma, Simplified Arabic
         public float NormalFontSize { get; set; } = 9.5f;
-        public float SmallFontSize { get; set; } = 8f;
 
         public int GetWidthMm()
         {
