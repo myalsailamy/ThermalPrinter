@@ -40,7 +40,7 @@ namespace ThermalReceiptPrinter
                     g.TextRenderingHint = TextRenderingHint.AntiAlias; // نص حاد بلا Anti-Alias | SingleBitPerPixelGridFit
                     g.InterpolationMode = InterpolationMode.NearestNeighbor; // مهم فقط عند رسم صور/شعار/باركود
                     g.PixelOffsetMode = PixelOffsetMode.None;
-                    g.CompositingQuality = CompositingQuality.HighQuality;
+                    g.CompositingQuality = CompositingQuality.HighSpeed; // HighQuality
 
                     //g.Clear(Color.White);
                     //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
